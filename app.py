@@ -1,27 +1,39 @@
-from vllm import LLM, SamplingParams
-from transformers import AutoTokenizer
+from llama_cpp import Llama
+from huggingface_hub import hf_hub_download
+import os
 
 class InferlessPythonModel:
     def initialize(self):
-        model_id = "meta-llama/Meta-Llama-3.1-8B-Instruct"
-        self.llm = LLM(model=model_id,dtype="float16")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_id)
+        # nfs_volume = os.getenv("NFS_VOLUME")
+        nfs_volume = "/opt/tritonserver"
+        if os.path.exists(nfs_volume + "/Meta-Llama-3.1-8B-Instruct-Q8_0.gguf") == False :
+            cache_file = hf_hub_download(
+                                repo_id="bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
+                                filename="Meta-Llama-3.1-8B-Instruct-Q8_0.gguf",
+                                local_dir=nfs_volume)
+        self.llm = Llama(
+            model_path=f"{nfs_volume}/Meta-Llama-3.1-8B-Instruct-Q8_0.gguf",
+            main_gpu=0,
+            n_gpu_layers=-1)
 
     def infer(self, inputs):
-        prompts = inputs["prompt"]
+        prompt = inputs["prompt"]
+        system_prompt = inputs.get("system_prompt","You are a friendly bot.")
         temperature = inputs.get("temperature",0.7)
         top_p = inputs.get("top_p",0.1)
-        repetition_penalty = inputs.get("repetition_penalty",1.18)
         top_k = inputs.get("top_k",40)
+        repeat_penalty = inputs.get("repeat_penalty",1.18)
         max_tokens = inputs.get("max_tokens",256)
-
-        sampling_params = SamplingParams(temperature=temperature,top_p=top_p,repetition_penalty=repetition_penalty,
-                                         top_k=top_k,max_tokens=max_tokens)
-        input_text = self.tokenizer.apply_chat_template([{"role": "user", "content": prompts}], tokenize=False)
-        result = self.llm.generate(input_text, sampling_params)
-        result_output = [output.outputs[0].text for output in result]
-
-        return {'result': result_output[0]}
-
+        
+        output = self.llm.create_chat_completion(
+                    messages = [
+                      {"role": "system", "content": f"{system_prompt}"},
+                      {"role": "user","content": f"{prompt}"}],
+                    temperature=temperature, top_p=top_p, top_k=top_k,repeat_penalty=repeat_penalty,max_tokens=max_tokens
+        )
+        text_result = output['choices'][0]['message']['content']
+        
+        return {'generated_result': text_result}
+        
     def finalize(self):
         self.llm = None
