@@ -1,17 +1,5 @@
-# Tutorial - Deploy Llama-3.1-8B-Instruct using Inferless
-[Llama-3.1-8B-Instruct](https://huggingface.co/meta-llama/Meta-Llama-3.1-8B-Instruct) model is part of Meta's advanced suite of multilingual large language models. This 8B Instruct model has been fine-tuned using supervised fine-tuning (SFT) and reinforced through reinforcement learning with human feedback (RLHF). This combination of methodologies ensures that the model not only performs with high accuracy but also aligns closely with human preferences for helpfulness and safety.
-
-## TL;DR:
-- Deployment of Llama-3.1-8B-Instruct model using [vllm](https://github.com/vllm-project/vllm).
-- You can expect an average tokens/sec of `74.79` and a latency of `3.43 sec` for generating a text of `256` tokens. This setup has an average cold start time of `15.44 sec`.
-- Dependencies defined in `inferless-runtime-config.yaml`.
-- GitHub/GitLab template creation with `app.py`, `inferless-runtime-config.yaml` and `inferless.yaml`.
-- Model class in `app.py` with `initialize`, `infer`, and `finalize` functions.
-- Custom runtime creation with necessary system and Python packages.
-- Model import via GitHub with `input_schema.py` file.
-- Recommended GPU: NVIDIA A100 for optimal performance.
-- Custom runtime selection in advanced configuration.
-- Final review and deployment on the Inferless platform.
+# Deploy Meta-Llama-3.1-8B-Instruct-GGUF using Inferless
+[Meta-Llama-3.1-8B-Instruct-GGUF](https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF) model is part of Meta's advanced suite of multilingual large language models. This 8B Instruct model has been fine-tuned using supervised fine-tuning (SFT) and reinforced through reinforcement learning with human feedback (RLHF). This combination of methodologies ensures that the model not only performs with high accuracy but also aligns closely with human preferences for helpfulness and safety.
 
 ### Fork the Repository
 Get started by forking the repository. You can do this by clicking on the fork button in the top right corner of the repository page.
@@ -23,8 +11,8 @@ To access the custom runtime window in Inferless, simply navigate to the sidebar
 
 Next, provide a suitable name for your custom runtime and proceed by uploading the **inferless-runtime-config.yaml** file given above. Finally, ensure you save your changes by clicking on the save button.
 
-### Add Your Hugging Face Access Token
-Go into the `inferless.yaml` and replace `<YOUR_HUGGINGFACE_ACCESS_TOKEN>` with your hugging face access token. Make sure to check the repo is private to protect your hugging face token.
+### Add Your NFS Volume
+Go into the `inferless.yaml` and replace `<YOUR_NFS_VOLUME_MOUNT_PATH>` with your volume mount path.
 
 ### Import the Model in Inferless
 Log in to your inferless account, select the workspace you want the model to be imported into and click the Add Model button.
@@ -49,6 +37,13 @@ curl --location '<your_inference_url>' \
           "datatype": "BYTES"
         },
         {
+          "name": "system_prompt",
+          "optional": true,
+          "shape": [1],
+          "data": ["You are a friendly bot."],
+          "datatype": "STRING"
+        },
+        {
           "name": "temperature",
           "optional": true,
           "shape": [1],
@@ -63,7 +58,7 @@ curl --location '<your_inference_url>' \
           "datatype": "FP32"
         },
         {
-          "name": "repetition_penalty",
+          "name": "repeat_penalty",
           "optional": true,
           "shape": [1],
           "data": [1.18],
@@ -97,11 +92,12 @@ Open the `app.py` file. This contains the main code for inference. It has three 
 
 ```python
 def infer(self, inputs):
-    prompts = inputs["prompt"]
+    prompt = inputs["prompt"]
+    system_prompt = inputs.get("system_prompt","You are a friendly bot.")
     temperature = inputs.get("temperature",0.7)
     top_p = inputs.get("top_p",0.1)
-    repetition_penalty = inputs.get("repetition_penalty",1.18)
     top_k = inputs.get("top_k",40)
+    repeat_penalty = inputs.get("repeat_penalty",1.18)
     max_tokens = inputs.get("max_tokens",256)
 ```
 
