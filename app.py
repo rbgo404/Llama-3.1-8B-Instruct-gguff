@@ -4,8 +4,7 @@ import os
 
 class InferlessPythonModel:
     def initialize(self):
-        # nfs_volume = os.getenv("NFS_VOLUME")
-        nfs_volume = "/opt/tritonserver"
+        nfs_volume = os.getenv("NFS_VOLUME")
         if os.path.exists(nfs_volume + "/Meta-Llama-3.1-8B-Instruct-Q8_0.gguf") == False :
             cache_file = hf_hub_download(
                                 repo_id="bartowski/Meta-Llama-3.1-8B-Instruct-GGUF",
