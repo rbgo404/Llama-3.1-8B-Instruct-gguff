@@ -5,6 +5,12 @@ INPUT_SCHEMA = {
         'shape': [1],
         'example': ["What is deep learning?"]
     },
+    "system_prompt": {
+        'datatype': 'STRING',
+        'required': False,
+        'shape': [1],
+        'example': ["You are a friendly bot."]
+    },
     "temperature": {
         'datatype': 'FP32',
         'required': False,
@@ -17,7 +23,7 @@ INPUT_SCHEMA = {
         'shape': [1],
         'example': [0.1]
     },
-    "repetition_penalty": {
+    "repeat_penalty": {
         'datatype': 'FP32',
         'required': False,
         'shape': [1],
