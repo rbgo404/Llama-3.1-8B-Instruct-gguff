@@ -1,5 +1,5 @@
 build:
   cuda_version: "12.1.1"
-  python_packages:
-    - "vllm==0.5.3.post1"
-    - "transformers==4.43.1"
+  run:
+    - 'CMAKE_ARGS="-DGGML_CUDA=on" pip install llama-cpp-python==0.2.85'
+    - "pip install huggingface-hub==0.24.5"
